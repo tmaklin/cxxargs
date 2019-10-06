@@ -9,24 +9,28 @@
 #include <exception>
 #include <vector>
 #include <cstring>
+#include <cmath>
+#include <utility>
 
 namespace std {
   template <typename T> istream& operator>> (istream &in, vector<T> &t) {
-    T in_val;
-    string str;;
+    string str;
     while (getline(in, str, ',')) {
+      t.emplace_back(*(new T()));
       stringstream sstream(str);
-      sstream >> in_val;
-      t.emplace_back(in_val);
+      sstream >> t.back();
     }
     return in;
   }
 }
+
 namespace cxxargs {
   class Argument {
   public:
+    virtual uint16_t get_pos() const =0;
     virtual std::string get_help() =0;
     virtual void parse_arg(char** begin, char** end) =0;
+
     virtual operator bool() { throw std::exception(); };
     virtual operator float() { throw std::exception(); };
     virtual operator double() { throw std::exception(); };
@@ -40,13 +44,15 @@ namespace cxxargs {
     std::string long_name;
     std::string help_text;
     T val;
+    uint16_t pos;
 
-    char** FindArg(char **begin, char **end) {
+    std::pair<char**, uint16_t> FindArg(char **begin, char **end) {
       char **it = std::find(begin, end, this->short_name);
       if (it == end) {
 	it = std::find(begin, end, this->long_name);
       }
-      return it;
+      uint16_t pos = std::ceil((std::distance(begin, it) + 1)/2.0);
+      return std::make_pair(it, pos);
     }
   public:
     ArgumentVal();
@@ -60,18 +66,22 @@ namespace cxxargs {
     }
   
     void parse_arg(char** begin, char **end) override {
-      char** it = FindArg(begin, end);
+      std::pair<char**, uint16_t> at = FindArg(begin, end);
+      char** it = at.first;
       if (it != end && ++it != end) {
 	std::stringstream arg(*it);
 	arg >> this->val;
       }
+      this->pos = at.second;
     }
     std::string get_help() override { return this->help_text; }
     operator T() override { return this->val; }
+    uint16_t get_pos() const override { return this->pos; }
   };
   template<> void ArgumentVal<bool>::parse_arg(char** begin, char** end) {
-    char **it = FindArg(begin, end);
-    this->val = ((it != end) ^ this->val);
+    std::pair<char**, uint16_t> at = FindArg(begin, end);
+    this->pos = at.second;
+    this->val = ((at.first != end) ^ this->val);
   }
 
   class Arguments {
@@ -98,6 +108,7 @@ namespace cxxargs {
       }
       return help_text;
     }
+    uint16_t get_pos(const std::string &name) { return args.at(name)->get_pos(); }
   };
 }
 

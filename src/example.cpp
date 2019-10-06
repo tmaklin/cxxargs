@@ -13,8 +13,8 @@ int main(int argc, char** argv) {
   for (size_t i = 0; i < valvec.size(); ++i) {
     std::cout << "val nr." << i << "in list: " << valvec.at(i) << std::endl;
   }
-  std::cout << val << std::endl;
-  std::cout << valf << std::endl;
+  std::cout << val << " at pos: " << args()->get_pos("double") << std::endl;
+  std::cout << valf << " at pos: " << args()->get_pos("float") << std::endl;
   std::cout << valb << std::endl;
   std::cout << args()->help() << std::endl;
   return 0;
