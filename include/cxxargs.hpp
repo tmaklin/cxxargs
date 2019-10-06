@@ -26,7 +26,7 @@ namespace cxxargs {
   class Argument {
   public:
     virtual std::string get_help() =0;
-    virtual void parse_opt(char** begin, char** end) =0;
+    virtual void parse_arg(char** begin, char** end) =0;
     virtual operator bool() { throw std::exception(); };
     virtual operator float() { throw std::exception(); };
     virtual operator double() { throw std::exception(); };
@@ -41,7 +41,7 @@ namespace cxxargs {
     std::string help_text;
     T val;
 
-    char** FindOpt(char **begin, char **end) {
+    char** FindArg(char **begin, char **end) {
       char **it = std::find(begin, end, this->short_name);
       if (it == end) {
 	it = std::find(begin, end, this->long_name);
@@ -59,18 +59,18 @@ namespace cxxargs {
       val = in_val;
     }
   
-    void parse_opt(char** begin, char **end) override {
-      char** it = FindOpt(begin, end);
+    void parse_arg(char** begin, char **end) override {
+      char** it = FindArg(begin, end);
       if (it != end && ++it != end) {
-	std::stringstream opt(*it);
-	opt >> this->val;
+	std::stringstream arg(*it);
+	arg >> this->val;
       }
     }
     std::string get_help() override { return this->help_text; }
     operator T() override { return this->val; }
   };
-  template<> void ArgumentVal<bool>::parse_opt(char** begin, char** end) {
-    char **it = FindOpt(begin, end);
+  template<> void ArgumentVal<bool>::parse_arg(char** begin, char** end) {
+    char **it = FindArg(begin, end);
     this->val = ((it != end) ^ this->val);
   }
 
@@ -78,15 +78,15 @@ namespace cxxargs {
   private:
     std::map<std::string, std::shared_ptr<Argument>> args;
   public:
-    template <typename T> void add_option(std::string short_name, std::string long_name, std::string help_text) {
+    template <typename T> void add_argument(std::string short_name, std::string long_name, std::string help_text) {
       this->args.insert(std::make_pair(long_name, std::shared_ptr<Argument>(new ArgumentVal<T>(short_name, long_name, help_text))));
     }
-    template <typename T> void add_option(std::string short_name, std::string long_name, std::string help_text, T in_val) {
+    template <typename T> void add_argument(std::string short_name, std::string long_name, std::string help_text, T in_val) {
       this->args.insert(std::make_pair(long_name, std::shared_ptr<Argument>(new ArgumentVal<T>(short_name, long_name, help_text, in_val))));
     }
     void parse(int argc, char** argv) {
       for (auto kv : args) {
-	kv.second->parse_opt(argv, argv+argc);
+	kv.second->parse_arg(argv, argv+argc);
       }
     }
     template <typename T> T value(const std::string &name) { return (*args.at(name)); }
