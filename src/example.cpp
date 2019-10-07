@@ -29,5 +29,8 @@ int main(int argc, char** argv) {
     std::cout << '\t' << ints.at(i) << " at position " << i << std::endl;
   }
 
+  std::cout << "Help:" << std::endl;
+  std::cout << args.help() << std::endl;
+
   return 0;
 }
