@@ -60,12 +60,13 @@ namespace cxxargs {
 
   public:
     ArgumentVal();
-    ArgumentVal(std::string a, std::string b, std::string c) {
-      short_name = "-" + a;
-      long_name = "--" + b;
-      help_text = short_name + " " + long_name + "\t" + c;
+    ArgumentVal(std::string short_name, std::string long_name, std::string help_text)
+      : short_name("-" + short_name)
+      , long_name("--" + long_name)
+      , help_text(this->short_name + " " + this->long_name + "\t" + help_text) {
     }
-    ArgumentVal(std::string a, std::string b, std::string c, T in_val) : ArgumentVal(a, b, c) {
+    ArgumentVal(std::string short_name, std::string long_name, std::string help_text, T in_val)
+      : ArgumentVal(short_name, long_name, help_text) {
       this->set_val(in_val);
     }
     void parse_arg(char** begin, char **end) override {
