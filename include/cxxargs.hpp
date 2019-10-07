@@ -30,11 +30,7 @@ namespace cxxargs {
     virtual uint16_t get_pos() const =0;
     virtual std::string get_help() =0;
     virtual void parse_arg(char** begin, char** end) =0;
-
-    virtual operator bool() { throw std::exception(); };
-    virtual operator float() { throw std::exception(); };
-    virtual operator double() { throw std::exception(); };
-    virtual operator std::vector<double>() {throw std::exception();};
+    template <class T> const T& get_val() const;
   };
 
   template <typename T>
@@ -45,7 +41,6 @@ namespace cxxargs {
     std::string help_text;
     T val;
     uint16_t pos;
-
     std::pair<char**, uint16_t> FindArg(char **begin, char **end) {
       char **it = std::find(begin, end, this->short_name);
       if (it == end) {
@@ -64,7 +59,6 @@ namespace cxxargs {
     ArgumentVal(std::string a, std::string b, std::string c, T in_val) : ArgumentVal(a, b, c) {
       val = in_val;
     }
-  
     void parse_arg(char** begin, char **end) override {
       std::pair<char**, uint16_t> at = FindArg(begin, end);
       char** it = at.first;
@@ -75,9 +69,12 @@ namespace cxxargs {
       this->pos = at.second;
     }
     std::string get_help() override { return this->help_text; }
-    operator T() override { return this->val; }
+    const T& get_val() const { return this->val; };
     uint16_t get_pos() const override { return this->pos; }
   };
+  template<class T> const T& Argument::get_val() const {
+    return dynamic_cast<const ArgumentVal<T>&>(*this).get_val();
+  }
   template<> void ArgumentVal<bool>::parse_arg(char** begin, char** end) {
     std::pair<char**, uint16_t> at = FindArg(begin, end);
     this->pos = at.second;
@@ -99,7 +96,6 @@ namespace cxxargs {
 	kv.second->parse_arg(argv, argv+argc);
       }
     }
-    template <typename T> T value(const std::string &name) { return (*args.at(name)); }
     std::string help() {
       std::string help_text("");
       for (auto kv : args) {
@@ -108,6 +104,7 @@ namespace cxxargs {
       }
       return help_text;
     }
+    template <typename T> T value(const std::string &name) { return args.at(name)->get_val<T>(); }
     uint16_t get_pos(const std::string &name) { return args.at(name)->get_pos(); }
   };
 }
