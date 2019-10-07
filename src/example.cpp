@@ -4,18 +4,22 @@
 #include "cxxargs_defined.hpp"
 
 int main(int argc, char** argv) {
-  cxxargs::cxxargs args;
-  args()->parse(argc, argv);
-  double val = args()->value<double>("double");
-  float valf = args()->value<float>("float");
-  bool valb = args()->value<bool>("gzip");
-  std::vector<double> valvec = args()->value<std::vector<double>>("list");
-  for (size_t i = 0; i < valvec.size(); ++i) {
-    std::cout << "val nr." << i << "in list: " << valvec.at(i) << std::endl;
+  cxxargs::Arguments args;
+  args.add_argument<double>("d", "double", "This is a double.");
+  args.add_argument<bool>("gz", "gzip", "This is a boolean toggle.");
+  args.add_argument<std::string>("s", "string", "This is a string.");
+  args.add_argument<std::vector<int>>("l", "list", "This is a list of integers.");
+  args.parse(argc, argv);
+  double val = args.value<double>("double");
+  std::cout << "Value of the double: " << val << std::endl;
+  bool gzip = args.value<bool>("gzip");
+  std:: cout << "Toggle is: " << (gzip ? "true" : "false") << std::endl;
+  std::string str = args.value<std::string>("string");
+  std:: cout << "String reads: " << str << std::endl;
+  std::vector<int> ints = args.value<std::vector<int>>("list");
+  for (size_t i = 0; i < ints.size(); ++i) {
+    std::cout << "Integer in the list at pos " << i << " is: " << ints.at(i) << std::endl;
   }
-  std::cout << val << " at pos: " << args()->get_pos("double") << std::endl;
-  std::cout << valf << " at pos: " << args()->get_pos("float") << std::endl;
-  std::cout << valb << std::endl;
-  std::cout << args()->help() << std::endl;
+
   return 0;
 }
