@@ -104,10 +104,15 @@ namespace cxxargs {
   class Arguments {
   private:
     std::map<std::string, std::shared_ptr<Argument>> args;
+    std::string help_text;
+    std::string program_name;
 
   public:
+    Arguments(std::string program_name, std::string usage_info)
+      : program_name(program_name), help_text(usage_info) {};
     template <typename T> void add_argument(std::string short_name, std::string long_name, std::string help_text) {
       this->args.insert(std::make_pair(long_name, std::shared_ptr<Argument>(new ArgumentVal<T>(short_name, long_name, help_text))));
+      this->help_text += '\n' + args.at(long_name)->get_help();
     }
     template <typename T> void add_argument(std::string short_name, std::string long_name, std::string help_text, T in_val) {
       this->add_argument<T>(short_name, long_name, help_text);
@@ -118,14 +123,7 @@ namespace cxxargs {
 	kv.second->parse_arg(argv, argv+argc);
       }
     }
-    std::string help() const {
-      std::string help_text("");
-      for (auto kv : args) {
-	help_text += kv.second->get_help();
-	help_text += '\n';
-      }
-      return help_text;
-    }
+    std::string help() const { return this->help_text; };
     template <typename T> T value(const std::string &name) const {
       #ifdef CXXARGS_EXCEPTIONS_HPP
       if (args.find(name) == args.end()) {
@@ -137,6 +135,7 @@ namespace cxxargs {
       return args.at(name)->get_val<T>();
     }
     uint16_t get_pos(const std::string &name) const { return args.at(name)->get_pos(); }
+    std::string get_name() const { return this->program_name; }
   };
 }
 

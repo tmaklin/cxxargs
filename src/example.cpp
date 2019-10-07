@@ -7,8 +7,9 @@
 #include "cxxargs.hpp"
 
 int main(int argc, char** argv) {
-  cxxargs::Arguments args;
-  args.add_argument<double>("d", "double", "This is a double.");
+  cxxargs::Arguments args("cxxargs command line parser", "Usage: ./test --string abc");
+  std::cout << args.get_name() << std::endl;
+  args.add_argument<double>("d", "double", "This is a double.", 0.222);
   args.add_argument<bool>("gz", "gzip", "This is a boolean toggle.");
   args.add_argument<std::string>("s", "string", "This is a string.");
   args.add_argument<std::vector<int>>("l", "list", "This is a list of integers.");
@@ -29,7 +30,6 @@ int main(int argc, char** argv) {
     std::cout << '\t' << ints.at(i) << " at position " << i << std::endl;
   }
 
-  std::cout << "Help:" << std::endl;
   std::cout << args.help() << std::endl;
 
   return 0;
