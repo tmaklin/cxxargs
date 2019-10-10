@@ -26,6 +26,12 @@ namespace cxxargs {
 	msg += "Value of --" + name + " has not been set.";
       }
     };
+
+    struct no_default_value : public cxxargs_exception {
+      no_default_value(const std::string &name) {
+	msg += "Argument " + name + " has no default value.";
+      }
+    };
   }
 }
 

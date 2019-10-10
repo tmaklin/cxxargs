@@ -35,6 +35,7 @@ namespace cxxargs {
     virtual std::string get_help() const =0;
     virtual void parse_arg(char** begin, char** end) =0;
     virtual bool is_initialized() const =0;
+    virtual std::string get_name() const =0;
     template <class T> const T& get_val() const;
     template <class T, class U> void set_val(U& in_val);
   };
@@ -77,14 +78,15 @@ namespace cxxargs {
 	T in_val;
 	arg >> in_val;
 	this->set_val(in_val);
+	this->pos = at.second;
       }
-      this->pos = at.second;
     }
     std::string get_help() const override { return this->help_text; }
     const T& get_val() const { return this->val; };
-    void set_val(T& in_val) { this->value_initialized = true; this->val = in_val; };
+    void set_val(T& in_val) { this->value_initialized = true; this->val = in_val; }
     uint16_t get_pos() const override { return this->pos; }
     bool is_initialized() const override { return this->value_initialized; }
+    std::string get_name() const override { return this->long_name; }
   };
 
   template<> void ArgumentVal<bool>::parse_arg(char** begin, char** end) {
@@ -121,6 +123,11 @@ namespace cxxargs {
     void parse(int argc, char** argv) const {
       for (auto kv : args) {
 	kv.second->parse_arg(argv, argv+argc);
+	#ifdef CXXARGS_EXCEPTIONS_HPP
+	if (!kv.second->is_initialized()) {
+	  throw exceptions::no_default_value(kv.second->get_name());
+	}
+	#endif
       }
     }
     std::string help() const { return this->help_text; };
@@ -134,7 +141,14 @@ namespace cxxargs {
       #endif
       return args.at(name)->get_val<T>();
     }
-    uint16_t get_pos(const std::string &name) const { return args.at(name)->get_pos(); }
+    uint16_t get_pos(const std::string &name) const {
+      #ifdef CXXARGS_EXCEPTIONS_HPP
+      if (args.find(name) == args.end()) {
+	throw exceptions::value_uninitialized(name);
+      }
+      #endif
+      return args.at(name)->get_pos();
+    }
     std::string get_name() const { return this->program_name; }
   };
 }
