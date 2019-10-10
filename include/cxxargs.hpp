@@ -29,6 +29,7 @@ namespace std {
 }
 
 namespace cxxargs {
+  typedef std::vector<std::string>::iterator aiter;
   class Argument {
   private:
     std::string short_name;
@@ -42,14 +43,14 @@ namespace cxxargs {
     , long_name("--" + long_name)
     , help_text(this->short_name + " " + this->long_name + "\t" + help_text) {};
 
-    virtual void parse_arg(char** begin, char** end) =0;
+    virtual void parse_arg(aiter begin, aiter end) =0;
     virtual uint16_t get_pos() const =0;
     virtual bool is_initialized() const =0;
     template <class T> const T& get_val() const;
     template <class T, class U> void set_val(U& in_val);
 
-    std::pair<char**, uint16_t> FindArg(char **begin, char **end) const {
-      char **it = std::find(begin, end, this->get_short_name());
+    std::pair<aiter, uint16_t> FindArg(aiter begin, aiter end) const {
+      aiter it = std::find(begin, end, this->get_short_name());
       if (it == end) {
 	it = std::find(begin, end, this->get_long_name());
       }
@@ -74,9 +75,9 @@ namespace cxxargs {
       : Argument(short_name, long_name, help_text) {
       this->set_val(in_val);
     }
-    void parse_arg(char** begin, char **end) override {
-      std::pair<char**, uint16_t> at = FindArg(begin, end);
-      char** it = at.first;
+    void parse_arg(aiter begin, aiter end) override {
+      std::pair<aiter, uint16_t> at = FindArg(begin, end);
+      aiter it = at.first;
       if (it != end && ++it != end) {
 	std::stringstream arg(*it);
 	T in_val;
@@ -90,8 +91,8 @@ namespace cxxargs {
     bool is_initialized() const override { return this->value_initialized; }
   };
 
-  template<> void ArgumentVal<bool>::parse_arg(char** begin, char** end) {
-    std::pair<char**, uint16_t> at = FindArg(begin, end);
+  template<> void ArgumentVal<bool>::parse_arg(aiter begin, aiter end) {
+    std::pair<aiter, uint16_t> at = FindArg(begin, end);
     bool in_val = ((at.first != end) ^ this->val.first);
     this->set_val(in_val, at.second);
   }
@@ -121,8 +122,9 @@ namespace cxxargs {
       this->args.at(long_name)->set_val<T>(in_val);
     }
     void parse(int argc, char** argv) const {
+      std::vector<std::string> vec(argv, argv+argc);
       for (auto kv : args) {
-	kv.second->parse_arg(argv, argv+argc);
+	kv.second->parse_arg(vec.begin(), vec.end());
 	#ifdef CXXARGS_EXCEPTIONS_HPP
 	if (!kv.second->is_initialized()) {
 	  throw exceptions::no_default_value(kv.second->get_long_name());
@@ -130,6 +132,7 @@ namespace cxxargs {
 	#endif
       }
     }
+
     std::string help() const { return this->help_text; };
     template <typename T> T value(const std::string &name) const {
       #ifdef CXXARGS_EXCEPTIONS_HPP
