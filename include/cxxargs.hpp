@@ -65,8 +65,7 @@ namespace cxxargs {
   template <typename T>
   class ArgumentVal : public Argument {
   private:
-    T val;
-    uint16_t pos;
+    std::pair<T, uint16_t> val;
     bool value_initialized = false;
 
   public:
@@ -82,21 +81,19 @@ namespace cxxargs {
 	std::stringstream arg(*it);
 	T in_val;
 	arg >> in_val;
-	this->set_val(in_val);
-	this->pos = at.second;
+	this->set_val(in_val, at.second);
       }
     }
-    const T& get_val() const { return this->val; };
-    void set_val(T& in_val) { this->value_initialized = true; this->val = in_val; }
-    uint16_t get_pos() const override { return this->pos; }
+    const T& get_val() const { return this->val.first; };
+    void set_val(T& in_val, uint16_t pos = 0) { this->value_initialized = true; this->val = std::make_pair(in_val, pos); }
+    uint16_t get_pos() const override { return this->val.second; }
     bool is_initialized() const override { return this->value_initialized; }
   };
 
   template<> void ArgumentVal<bool>::parse_arg(char** begin, char** end) {
     std::pair<char**, uint16_t> at = FindArg(begin, end);
-    this->pos = at.second;
-    bool in_val = ((at.first != end) ^ this->val);
-    this->set_val(in_val);
+    bool in_val = ((at.first != end) ^ this->val.first);
+    this->set_val(in_val, at.second);
   }
 
   template<class T> const T& Argument::get_val() const {
