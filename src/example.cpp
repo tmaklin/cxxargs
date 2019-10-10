@@ -8,7 +8,7 @@
 
 int main(int argc, char** argv) {
   cxxargs::Arguments args("cxxargs command line parser", "Usage: ./test --string abc");
-  std::cout << args.get_name() << std::endl;
+  std::cout << args.get_program_name() << std::endl;
   args.add_argument<double>("d", "double", "This is a double.", 0.222);
   args.add_argument<bool>("gz", "gzip", "This is a boolean toggle.");
   args.add_argument<std::string>("s", "string", "This is a string.");

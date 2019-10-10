@@ -30,44 +30,49 @@ namespace std {
 
 namespace cxxargs {
   class Argument {
-  public:
-    virtual uint16_t get_pos() const =0;
-    virtual std::string get_help() const =0;
-    virtual void parse_arg(char** begin, char** end) =0;
-    virtual bool is_initialized() const =0;
-    virtual std::string get_name() const =0;
-    template <class T> const T& get_val() const;
-    template <class T, class U> void set_val(U& in_val);
-  };
-
-  template <typename T>
-  class ArgumentVal : public Argument {
   private:
     std::string short_name;
     std::string long_name;
     std::string help_text;
-    T val;
-    uint16_t pos;
-    bool value_initialized = false;
+
+  public:
+    Argument();
+    Argument(std::string short_name, std::string long_name, std::string help_text)
+    : short_name("-" + short_name)
+    , long_name("--" + long_name)
+    , help_text(this->short_name + " " + this->long_name + "\t" + help_text) {};
+
+    virtual void parse_arg(char** begin, char** end) =0;
+    virtual uint16_t get_pos() const =0;
+    virtual bool is_initialized() const =0;
+    template <class T> const T& get_val() const;
+    template <class T, class U> void set_val(U& in_val);
 
     std::pair<char**, uint16_t> FindArg(char **begin, char **end) const {
-      char **it = std::find(begin, end, this->short_name);
+      char **it = std::find(begin, end, this->get_short_name());
       if (it == end) {
-	it = std::find(begin, end, this->long_name);
+	it = std::find(begin, end, this->get_long_name());
       }
       uint16_t pos = std::ceil((std::distance(begin, it) + 1)/2.0);
       return std::make_pair(it, pos);
     }
 
+    std::string get_short_name() const { return this->short_name; }
+    std::string get_long_name() const { return this->long_name; }
+    std::string get_help() const { return this->help_text; }
+  };
+
+  template <typename T>
+  class ArgumentVal : public Argument {
+  private:
+    T val;
+    uint16_t pos;
+    bool value_initialized = false;
+
   public:
-    ArgumentVal();
-    ArgumentVal(std::string short_name, std::string long_name, std::string help_text)
-      : short_name("-" + short_name)
-      , long_name("--" + long_name)
-      , help_text(this->short_name + " " + this->long_name + "\t" + help_text) {
-    }
+    using Argument::Argument;
     ArgumentVal(std::string short_name, std::string long_name, std::string help_text, T in_val)
-      : ArgumentVal(short_name, long_name, help_text) {
+      : Argument(short_name, long_name, help_text) {
       this->set_val(in_val);
     }
     void parse_arg(char** begin, char **end) override {
@@ -81,12 +86,10 @@ namespace cxxargs {
 	this->pos = at.second;
       }
     }
-    std::string get_help() const override { return this->help_text; }
     const T& get_val() const { return this->val; };
     void set_val(T& in_val) { this->value_initialized = true; this->val = in_val; }
     uint16_t get_pos() const override { return this->pos; }
     bool is_initialized() const override { return this->value_initialized; }
-    std::string get_name() const override { return this->long_name; }
   };
 
   template<> void ArgumentVal<bool>::parse_arg(char** begin, char** end) {
@@ -125,7 +128,7 @@ namespace cxxargs {
 	kv.second->parse_arg(argv, argv+argc);
 	#ifdef CXXARGS_EXCEPTIONS_HPP
 	if (!kv.second->is_initialized()) {
-	  throw exceptions::no_default_value(kv.second->get_name());
+	  throw exceptions::no_default_value(kv.second->get_long_name());
 	}
 	#endif
       }
@@ -149,7 +152,7 @@ namespace cxxargs {
       #endif
       return args.at(name)->get_pos();
     }
-    std::string get_name() const { return this->program_name; }
+    std::string get_program_name() const { return this->program_name; }
   };
 }
 
