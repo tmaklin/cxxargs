@@ -84,7 +84,7 @@ namespace cxxargs {
 	    this->set_val(in_val, std::ceil((it - begin)/2.0));
 	  }
 	}
-      } else if (it != end && ++it != end) {
+      } else if (++it != end) {
 	std::stringstream arg(*it);
 	arg >> in_val;
 	this->set_val(in_val, std::ceil((it - begin)/2.0));
