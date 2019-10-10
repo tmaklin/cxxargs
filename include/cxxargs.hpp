@@ -42,7 +42,7 @@ namespace cxxargs {
     , long_name("--" + long_name)
     , help_text(this->short_name + " " + this->long_name + "\t" + help_text) {};
 
-    virtual void parse_arg(const aiter &begin, const aiter &end) =0;
+    virtual void FindArg(const aiter &begin, const aiter &end) =0;
     virtual uint16_t get_pos() const =0;
     virtual bool is_initialized() const =0;
     template <class T> const T& get_val() const;
@@ -59,7 +59,18 @@ namespace cxxargs {
     std::pair<T, uint16_t> val;
     bool value_initialized = false;
 
-    std::pair<T, uint16_t> FindArg(const aiter &begin, const aiter &end) const {
+  public:
+    using Argument::Argument;
+    ArgumentVal(std::string short_name, std::string long_name, std::string help_text, T in_val)
+      : Argument(short_name, long_name, help_text) {
+      this->set_val(in_val);
+    }
+    const T& get_val() const { return this->val.first; };
+    void set_val(T& in_val, uint16_t pos = 0) { this->value_initialized = true; this->val = std::make_pair(in_val, pos); }
+    uint16_t get_pos() const override { return this->val.second; }
+    bool is_initialized() const override { return this->value_initialized; }
+
+    void FindArg(const aiter &begin, const aiter &end) override {
       aiter it = std::find(begin, end, this->get_short_name());
       it = (it == end ? std::find(begin, end, this->get_long_name()) : it);
       T in_val;
@@ -70,38 +81,18 @@ namespace cxxargs {
 	    std::string dump;
 	    getline(arg, dump, '=');
 	    arg >> in_val;
-	    return std::make_pair(in_val, std::ceil((it - begin)/2.0));
+	    this->set_val(in_val, std::ceil((it - begin)/2.0));
 	  }
 	}
       } else if (it != end && ++it != end) {
-	++it;
 	std::stringstream arg(*it);
 	arg >> in_val;
-	return std::make_pair(in_val, std::ceil((it - begin)/2.0));
+	this->set_val(in_val, std::ceil((it - begin)/2.0));
       }
-      if (this->value_initialized) {
-	return this->val;
-      }
-      throw exceptions::argument_not_found(this->get_long_name());
     }
-
-  public:
-    using Argument::Argument;
-    ArgumentVal(std::string short_name, std::string long_name, std::string help_text, T in_val)
-      : Argument(short_name, long_name, help_text) {
-      this->set_val(in_val);
-    }
-    void parse_arg(const aiter &begin, const aiter &end) override {
-      std::pair<T, uint16_t> at = FindArg(begin, end);
-      this->set_val(at.first, at.second);
-    }
-    const T& get_val() const { return this->val.first; };
-    void set_val(T& in_val, uint16_t pos = 0) { this->value_initialized = true; this->val = std::make_pair(in_val, pos); }
-    uint16_t get_pos() const override { return this->val.second; }
-    bool is_initialized() const override { return this->value_initialized; }
   };
 
-  template<> void ArgumentVal<bool>::parse_arg(const aiter &begin, const aiter &end) {
+  template<> void ArgumentVal<bool>::FindArg(const aiter &begin, const aiter &end) {
     aiter it = std::find(begin, end, this->get_long_name());
     it = (it == end ? std::find(begin, end, this->get_short_name()) : it);
     bool in_val = ((it != end) ^ this->val.first);
@@ -135,7 +126,7 @@ namespace cxxargs {
     void parse(int argc, char** argv) const {
       std::vector<std::string> vec(argv, argv+argc);
       for (auto kv : args) {
-	kv.second->parse_arg(vec.begin(), vec.end());
+	kv.second->FindArg(vec.begin(), vec.end());
 	#ifdef CXXARGS_EXCEPTIONS_HPP
 	if (!kv.second->is_initialized()) {
 	  throw exceptions::no_default_value(kv.second->get_long_name());
