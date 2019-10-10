@@ -129,7 +129,7 @@ namespace cxxargs {
 	kv.second->FindArg(vec.begin(), vec.end());
 	#ifdef CXXARGS_EXCEPTIONS_HPP
 	if (!kv.second->is_initialized()) {
-	  throw exceptions::no_default_value(kv.second->get_long_name());
+	  throw exceptions::value_uninitialized(kv.second->get_long_name());
 	}
 	#endif
       }
@@ -140,8 +140,6 @@ namespace cxxargs {
       #ifdef CXXARGS_EXCEPTIONS_HPP
       if (args.find(name) == args.end()) {
 	throw exceptions::argument_not_found(name);
-      } else if (!args.at(name)->is_initialized()) {
-	throw exceptions::value_uninitialized(name);
       }
       #endif
       return args.at(name)->get_val<T>();
@@ -149,7 +147,7 @@ namespace cxxargs {
     uint16_t get_pos(const std::string &name) const {
       #ifdef CXXARGS_EXCEPTIONS_HPP
       if (args.find(name) == args.end()) {
-	throw exceptions::value_uninitialized(name);
+	throw exceptions::argument_not_found(name);
       }
       #endif
       return args.at(name)->get_pos();

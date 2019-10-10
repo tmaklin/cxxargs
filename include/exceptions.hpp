@@ -23,13 +23,7 @@ namespace cxxargs {
 
     struct value_uninitialized : public cxxargs_exception {
       value_uninitialized(const std::string &name) {
-	msg += "Value of --" + name + " has not been set.";
-      }
-    };
-
-    struct no_default_value : public cxxargs_exception {
-      no_default_value(const std::string &name) {
-	msg += "Argument " + name + " has no default value.";
+	msg += "Value of --" + name + " has not been set and has no default value.";
       }
     };
   }
