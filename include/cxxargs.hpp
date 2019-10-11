@@ -43,7 +43,7 @@ namespace cxxargs {
     , help_text(this->short_name + " " + this->long_name + "\t" + help_text) {};
 
     virtual void FindArg(const aiter &begin, const aiter &end) =0;
-    virtual uint16_t get_pos() const =0;
+    virtual const uint16_t& get_pos() const =0;
     virtual bool is_initialized() const =0;
     template <class T> const T& get_val() const;
     template <class T, class U> void set_val(U& in_val);
@@ -67,7 +67,7 @@ namespace cxxargs {
     }
     const T& get_val() const { return this->val.first; };
     void set_val(T& in_val, uint16_t pos = 0) { this->value_initialized = true; this->val = std::make_pair(in_val, pos); }
-    uint16_t get_pos() const override { return this->val.second; }
+    const uint16_t& get_pos() const override { return this->val.second; }
     bool is_initialized() const override { return this->value_initialized; }
 
     void FindArg(const aiter &begin, const aiter &end) override {
@@ -136,7 +136,7 @@ namespace cxxargs {
     }
 
     std::string help() const { return this->help_text; };
-    template <typename T> T value(const std::string &name) const {
+    template <typename T> const T& value(const std::string &name) const {
       #ifdef CXXARGS_EXCEPTIONS_HPP
       if (args.find(name) == args.end()) {
 	throw exceptions::argument_not_found(name);
@@ -144,7 +144,7 @@ namespace cxxargs {
       #endif
       return args.at(name)->get_val<T>();
     }
-    uint16_t get_pos(const std::string &name) const {
+    const uint16_t& get_pos(const std::string &name) const {
       #ifdef CXXARGS_EXCEPTIONS_HPP
       if (args.find(name) == args.end()) {
 	throw exceptions::argument_not_found(name);
