@@ -44,13 +44,13 @@ namespace cxxargs {
 
     virtual void FindArg(const aiter &begin, const aiter &end) =0;
     virtual const uint16_t& get_pos() const =0;
-    virtual bool is_initialized() const =0;
+    virtual const bool& is_initialized() const =0;
     template <class T> const T& get_val() const;
     template <class T, class U> void set_val(U& in_val);
 
-    std::string get_short_name() const { return this->short_name; }
-    std::string get_long_name() const { return this->long_name; }
-    std::string get_help() const { return this->help_text; }
+    const std::string& get_short_name() const { return this->short_name; }
+    const std::string& get_long_name() const { return this->long_name; }
+    const std::string& get_help() const { return this->help_text; }
   };
 
   template <typename T>
@@ -68,7 +68,7 @@ namespace cxxargs {
     const T& get_val() const { return this->val.first; };
     void set_val(T& in_val, uint16_t pos = 0) { this->value_initialized = true; this->val = std::make_pair(in_val, pos); }
     const uint16_t& get_pos() const override { return this->val.second; }
-    bool is_initialized() const override { return this->value_initialized; }
+    const bool& is_initialized() const override { return this->value_initialized; }
 
     void FindArg(const aiter &begin, const aiter &end) override {
       aiter it = std::find(begin, end, this->get_short_name());
@@ -135,7 +135,7 @@ namespace cxxargs {
       }
     }
 
-    std::string help() const { return this->help_text; };
+    const std::string& help() const { return this->help_text; };
     template <typename T> const T& value(const std::string &name) const {
       #ifdef CXXARGS_EXCEPTIONS_HPP
       if (args.find(name) == args.end()) {
@@ -152,7 +152,7 @@ namespace cxxargs {
       #endif
       return args.at(name)->get_pos();
     }
-    std::string get_program_name() const { return this->program_name; }
+    const std::string& get_program_name() const { return this->program_name; }
   };
 }
 
