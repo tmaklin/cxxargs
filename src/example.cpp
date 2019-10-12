@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
   args.add_argument<bool>("gz", "gzip", "This is a boolean toggle.");
   args.add_argument<std::string>("s", "string", "This is a string.");
   args.add_argument<std::vector<int>>("l", "list", "This is a list of integers.");
-  args.parse(argc, argv);
+  args.parse_posix(argc, argv);
 
   double val = args.value<double>("double");
   std::cout << "Value of the double (argument nr. " << args.get_pos("double") << "): " << val << std::endl;
