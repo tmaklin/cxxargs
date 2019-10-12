@@ -14,18 +14,6 @@
 #include <utility>
 #include <exception>
 
-namespace std {
-  template <typename T> istream& operator>> (istream &in, vector<T> &t) {
-    string str;
-    while (getline(in, str, ',')) {
-      t.emplace_back(*(new T()));
-      stringstream sstream(str);
-      sstream >> t.back();
-    }
-    return in;
-  }
-}
-
 namespace cxxargs {
   namespace exceptions {
     struct cxxargs_exception : public std::exception {
@@ -42,6 +30,15 @@ namespace cxxargs {
 	msg += "Value of --" + name + " has not been set and has no default value.";
       }
     };
+  }
+  template <typename T> std::istream& operator>> (std::istream &in, std::vector<T> &t) {
+    std::string str;
+    while (getline(in, str, ',')) {
+      t.emplace_back(*(new T()));
+      std::stringstream sstream(str);
+      sstream >> t.back();
+    }
+    return in;
   }
 
   class Argument {
