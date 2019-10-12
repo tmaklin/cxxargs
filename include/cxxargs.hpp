@@ -115,7 +115,7 @@ namespace cxxargs {
   }
   template<> void ArgumentVal<bool>::FindArg(const uint16_t &pos, std::vector<std::string>::const_iterator iter) {
     bool in_val = (this->is_initialized() ? !this->get_val() : true);
-    this->set_val(in_val, pos);
+    this->set_val(in_val, std::ceil(pos/2.0));
   }
   
   template<class T> const T& Argument::get_val() const {
@@ -138,11 +138,21 @@ namespace cxxargs {
 	  this->args.at(*it)->FindArg(it - vec.begin() + 1, it);
 	} else if (this->shortargs.find(*it) != this->shortargs.end()) {
 	  this->shortargs.at(*it)->FindArg(it - vec.begin() + 1, it);
+	} else if (it->compare(0, 1, "-") == 0 && it->compare(1, 1, "-") != 0) {
+	  for (size_t i = 1; i < it->size(); ++i) {
+	    std::string nname(1, it->at(i));
+	    if (this->shortargs.find("-" + nname) != this->shortargs.end()) {
+	      if (i == it->size() - 1) {
+		this->shortargs.at("-" + nname)->FindArg(it - vec.begin() + 1, it);
+	      } else {
+		this->shortargs.at("-" + nname)->FindArg(it - vec.begin() + 1, it);
+	      }
+	    }
+	  }
 	} else if (it->find('=') != std::string::npos) {
 	  std::stringstream arg(*it);
 	  std::string name;
 	  getline(arg, name, '=');
-	  std::cout << name << std::endl;
 	  if (this->args.find(name) != this->args.end()) {
 	    this->args.at(name)->FindArg(it - vec.begin() + 1, arg);
 	  }
