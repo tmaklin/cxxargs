@@ -102,6 +102,7 @@ namespace cxxargs {
   private:
     std::map<std::string, std::shared_ptr<Argument>> args;
     std::map<std::string, std::shared_ptr<Argument>> shortargs;
+    std::vector<std::string> positionals;
     std::string help_text;
     std::string program_name;
 
@@ -126,7 +127,9 @@ namespace cxxargs {
 	    this->args.at(name)->FindArg(it - begin + 1, arg);
 	  }
 	} else if (it->compare("--") == 0) {
-	  std::cout << "rest are positional arguments (parsing unimplemented)" << std::endl;
+	  while (++it < end) {
+	    this->positionals.emplace_back(*it);
+	  }
 	}
       }
     }
@@ -166,6 +169,10 @@ namespace cxxargs {
       return this->args.at("--" + name)->get_pos();
     }
     const std::string& get_program_name() const { return this->program_name; }
+    const std::string& get_positional(const uint16_t &pos) const {
+      return this->positionals.at(pos);
+    }
+    size_t get_n_positionals() const { return this->positionals.size(); }
   };
 }
 
