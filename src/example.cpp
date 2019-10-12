@@ -38,8 +38,8 @@ int main(int argc, char** argv) {
   uint16_t argument = args.value<uint16_t>("argument");
   std::cout << "Argument -a: " << argument << std::endl;
 
-  if (args.get_n_positionals() > 0) {
-    for (size_t i = 0; i < args.get_n_positionals(); ++i) {
+  if (args.n_positionals() > 0) {
+    for (size_t i = 0; i < args.n_positionals(); ++i) {
       std::cout << "Positional argument " << i << " " << args.get_positional(i) << std::endl;
     }
   }
