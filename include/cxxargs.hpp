@@ -30,16 +30,16 @@ namespace std {
 namespace cxxargs {
   class Argument {
   private:
-    std::string short_name;
+    char short_name;
     std::string long_name;
     std::string help_text;
 
   public:
     Argument();
-    Argument(std::string short_name, std::string long_name, std::string help_text)
-    : short_name("-" + short_name)
-    , long_name("--" + long_name)
-    , help_text(this->short_name + " " + this->long_name + "\t" + help_text) {};
+    Argument(char short_name, std::string long_name, std::string help_text)
+      : short_name(short_name)
+      , long_name("--" + long_name)
+      , help_text(std::string(1, this->short_name) + " " + this->long_name + "\t" + help_text) {};
 
     virtual void parse_argument(std::vector<std::string>::const_iterator iter) =0;
     virtual void parse_argument(std::stringstream &str) =0;
@@ -47,7 +47,7 @@ namespace cxxargs {
     template <class T> const T& get_val() const;
     template <class T, class U> void set_val(U& in_val);
 
-    const std::string& get_short_name() const { return this->short_name; }
+    const char& get_short_name() const { return this->short_name; }
     const std::string& get_long_name() const { return this->long_name; }
     const std::string& get_help() const { return this->help_text; }
   };
@@ -60,7 +60,7 @@ namespace cxxargs {
 
   public:
     using Argument::Argument;
-    ArgumentVal(std::string short_name, std::string long_name, std::string help_text, T in_val)
+    ArgumentVal(char short_name, std::string long_name, std::string help_text, T in_val)
       : Argument(short_name, long_name, help_text) {
       this->set_val(in_val);
     }
@@ -96,7 +96,7 @@ namespace cxxargs {
   class Arguments {
   private:
     std::map<std::string, std::shared_ptr<Argument>> args;
-    std::map<std::string, std::shared_ptr<Argument>> shortargs;
+    std::map<char, std::shared_ptr<Argument>> shortargs;
     std::vector<std::string> positionals;
     std::string help_text;
     std::string program_name;
@@ -104,12 +104,12 @@ namespace cxxargs {
   public:
     Arguments(std::string program_name, std::string usage_info)
       : program_name(program_name), help_text(usage_info) {};
-    template <typename T> void add_argument(std::string short_name, std::string long_name, std::string help_text) {
+    template <typename T> void add_argument(char short_name, std::string long_name, std::string help_text) {
       this->args.insert(std::make_pair("--" + long_name, std::shared_ptr<Argument>(new ArgumentVal<T>(short_name, long_name, help_text))));
-      this->shortargs.insert(std::make_pair("-" + short_name, this->args.at("--" + long_name)));
+      this->shortargs.insert(std::make_pair(short_name, this->args.at("--" + long_name)));
       this->help_text += '\n' + args.at("--" + long_name)->get_help();
     }
-    template <typename T> void add_argument(std::string short_name, std::string long_name, std::string help_text, T in_val) {
+    template <typename T> void add_argument(char short_name, std::string long_name, std::string help_text, T in_val) {
       this->add_argument<T>(short_name, long_name, help_text);
       this->args.at("--" + long_name)->set_val<T>(in_val);
     }
@@ -118,13 +118,10 @@ namespace cxxargs {
       for (std::vector<std::string>::const_iterator it = vec.begin() + 1; it < vec.end(); ++it) {
 	if (this->args.find(*it) != this->args.end()) {
 	  this->args.at(*it)->parse_argument(it);
-	} else if (this->shortargs.find(*it) != this->shortargs.end()) {
-	  this->shortargs.at(*it)->parse_argument(it);
 	} else if (it->compare(0, 1, "-") == 0 && it->compare(1, 1, "-") != 0) {
 	  for (size_t i = 1; i < it->size(); ++i) {
-	    std::string nname(1, it->at(i));
-	    if (this->shortargs.find("-" + nname) != this->shortargs.end()) {
-	      this->shortargs.at("-" + nname)->parse_argument(it);
+	    if (this->shortargs.find(it->at(i)) != this->shortargs.end()) {
+	      this->shortargs.at(it->at(i))->parse_argument(it);
 	    }
 	  }
 	} else if (it->find('=') != std::string::npos) {
