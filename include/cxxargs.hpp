@@ -42,7 +42,6 @@ namespace cxxargs {
     , long_name("--" + long_name)
     , help_text(this->short_name + " " + this->long_name + "\t" + help_text) {};
 
-    virtual void FindArg(const aiter &begin, const aiter &end) =0;
     virtual void FindArg(const uint16_t &pos, std::vector<std::string>::const_iterator iter) =0;
     virtual void FindArg(const uint16_t &pos, std::stringstream &str) =0;
     virtual const uint16_t& get_pos() const =0;
@@ -72,26 +71,6 @@ namespace cxxargs {
     const uint16_t& get_pos() const override { return this->val.second; }
     const bool& is_initialized() const override { return this->value_initialized; }
 
-    void FindArg(const aiter &begin, const aiter &end) override {
-      aiter it = std::find(begin, end, this->get_short_name());
-      it = (it == end ? std::find(begin, end, this->get_long_name()) : it);
-      T in_val;
-      if (it == end) {
-	for (aiter it = begin; it < end; ++it) {
-	  if (it->find(this->get_long_name()) != std::string::npos) {
-	    std::stringstream arg(*it);
-	    std::string dump;
-	    getline(arg, dump, '=');
-	    arg >> in_val;
-	    this->set_val(in_val, std::ceil((it - begin)/2.0));
-	  }
-	}
-      } else if (++it != end) {
-	std::stringstream arg(*it);
-	arg >> in_val;
-	this->set_val(in_val, std::ceil((it - begin)/2.0));
-      }
-    }
     void FindArg(const uint16_t &pos, std::vector<std::string>::const_iterator iter) override {
       ++iter;
       std::stringstream str(*iter);
@@ -107,12 +86,6 @@ namespace cxxargs {
 
   };
 
-  template<> void ArgumentVal<bool>::FindArg(const aiter &begin, const aiter &end) {
-    aiter it = std::find(begin, end, this->get_long_name());
-    it = (it == end ? std::find(begin, end, this->get_short_name()) : it);
-    bool in_val = ((it != end) ^ this->val.first);
-    this->set_val(in_val, 0);
-  }
   template<> void ArgumentVal<bool>::FindArg(const uint16_t &pos, std::vector<std::string>::const_iterator iter) {
     bool in_val = (this->is_initialized() ? !this->get_val() : true);
     this->set_val(in_val, std::ceil(pos/2.0));
@@ -132,21 +105,17 @@ namespace cxxargs {
     std::string help_text;
     std::string program_name;
 
-    void FindArgPosix(const std::vector<std::string> &vec) {
-      for (std::vector<std::string>::const_iterator it = vec.begin() + 1; it < vec.end(); ++it) {
+    void ParseArguments(const aiter &begin, const aiter &end) {
+      for (std::vector<std::string>::const_iterator it = begin + 1; it < end; ++it) {
 	if (this->args.find(*it) != this->args.end()) {
-	  this->args.at(*it)->FindArg(it - vec.begin() + 1, it);
+	  this->args.at(*it)->FindArg(it - begin + 1, it);
 	} else if (this->shortargs.find(*it) != this->shortargs.end()) {
-	  this->shortargs.at(*it)->FindArg(it - vec.begin() + 1, it);
+	  this->shortargs.at(*it)->FindArg(it - begin + 1, it);
 	} else if (it->compare(0, 1, "-") == 0 && it->compare(1, 1, "-") != 0) {
 	  for (size_t i = 1; i < it->size(); ++i) {
 	    std::string nname(1, it->at(i));
 	    if (this->shortargs.find("-" + nname) != this->shortargs.end()) {
-	      if (i == it->size() - 1) {
-		this->shortargs.at("-" + nname)->FindArg(it - vec.begin() + 1, it);
-	      } else {
-		this->shortargs.at("-" + nname)->FindArg(it - vec.begin() + 1, it);
-	      }
+	      this->shortargs.at("-" + nname)->FindArg(it - begin + 1, it);
 	    }
 	  }
 	} else if (it->find('=') != std::string::npos) {
@@ -154,8 +123,10 @@ namespace cxxargs {
 	  std::string name;
 	  getline(arg, name, '=');
 	  if (this->args.find(name) != this->args.end()) {
-	    this->args.at(name)->FindArg(it - vec.begin() + 1, arg);
+	    this->args.at(name)->FindArg(it - begin + 1, arg);
 	  }
+	} else if (it->compare("--") == 0) {
+	  std::cout << "rest are positional arguments (parsing unimplemented)" << std::endl;
 	}
       }
     }
@@ -172,21 +143,9 @@ namespace cxxargs {
       this->add_argument<T>(short_name, long_name, help_text);
       this->args.at("--" + long_name)->set_val<T>(in_val);
     }
-    void parse_posix(int argc, char** argv) {
-      std::vector<std::string> vec(argv, argv+argc);
-      this->FindArgPosix(vec);
-    }
-
     void parse(int argc, char** argv) {
       std::vector<std::string> vec(argv, argv+argc);
-      for (auto kv : args) {
-      	kv.second->FindArg(vec.begin(), vec.end());
-        #ifdef CXXARGS_EXCEPTIONS_HPP
-      	if (!kv.second->is_initialized()) {
-      	  throw exceptions::value_uninitialized(kv.second->get_long_name());
-      	}
-        #endif
-      }
+      this->ParseArguments(vec.begin(), vec.end());
     }
 
     const std::string& help() const { return this->help_text; };

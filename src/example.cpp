@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
   args.add_argument<std::vector<int>>("l", "list", "This is a list of integers.");
   args.add_argument<bool>("t", "toggle", "This is another toggle.");
   args.add_argument<uint16_t>("a", "argument", "This is a uint16_t argument.");
-  args.parse_posix(argc, argv);
+  args.parse(argc, argv);
 
   double val = args.value<double>("double");
   std::cout << "Value of the double (argument nr. " << args.get_pos("double") << "): " << val << std::endl;
