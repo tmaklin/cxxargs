@@ -52,7 +52,7 @@ namespace cxxargs {
     Argument(char short_name, std::string long_name, std::string help_text)
       : short_name(short_name)
       , long_name("--" + long_name)
-      , help_text(std::string(1, this->short_name) + " " + this->long_name + "\t" + help_text) {};
+      , help_text("-" + std::string(1, this->short_name) + " " + this->long_name + "\t" + help_text) {};
 
     virtual void parse_argument(std::vector<std::string>::const_iterator iter) =0;
     virtual void parse_argument(std::stringstream &str) =0;
