@@ -12,8 +12,7 @@
 #include <vector>
 #include <cmath>
 #include <utility>
-
-#include "exceptions.hpp"
+#include <exception>
 
 namespace std {
   template <typename T> istream& operator>> (istream &in, vector<T> &t) {
@@ -28,6 +27,23 @@ namespace std {
 }
 
 namespace cxxargs {
+  namespace exceptions {
+    struct cxxargs_exception : public std::exception {
+      std::string msg;
+      const char* what() const throw() { return msg.c_str(); };
+    };
+    struct argument_not_found : public cxxargs_exception {
+      argument_not_found(const std::string &name) {
+	msg += "Argument --" + name + " is not defined.";
+      }
+    };
+    struct value_uninitialized : public cxxargs_exception {
+      value_uninitialized(const std::string &name) {
+	msg += "Value of --" + name + " has not been set and has no default value.";
+      }
+    };
+  }
+
   class Argument {
   private:
     char short_name;
@@ -139,11 +155,11 @@ namespace cxxargs {
 
     const std::string& help() const { return this->help_text; };
     template <typename T> const T& value(const std::string &name) const {
-      #ifdef CXXARGS_EXCEPTIONS_HPP
       if (this->args.find("--" + name) == this->args.end()) {
 	throw exceptions::argument_not_found(name);
+      } else if (!this->args.at("--" + name)->is_initialized()) {
+	throw exceptions::value_uninitialized(name);
       }
-      #endif
       return this->args.at("--" + name)->get_val<T>();
     }
     const std::string& get_program_name() const { return this->program_name; }
