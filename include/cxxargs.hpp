@@ -47,8 +47,6 @@ namespace cxxargs {
     template <class T> const T& get_val() const;
     template <class T, class U> void set_val(U& in_val);
 
-    const char& get_short_name() const { return this->short_name; }
-    const std::string& get_long_name() const { return this->long_name; }
     const std::string& get_help() const { return this->help_text; }
   };
 
