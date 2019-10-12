@@ -42,9 +42,8 @@ namespace cxxargs {
     , long_name("--" + long_name)
     , help_text(this->short_name + " " + this->long_name + "\t" + help_text) {};
 
-    virtual void FindArg(const uint16_t &pos, std::vector<std::string>::const_iterator iter) =0;
-    virtual void FindArg(const uint16_t &pos, std::stringstream &str) =0;
-    virtual const uint16_t& get_pos() const =0;
+    virtual void FindArg(std::vector<std::string>::const_iterator iter) =0;
+    virtual void FindArg(std::stringstream &str) =0;
     virtual const bool& is_initialized() const =0;
     template <class T> const T& get_val() const;
     template <class T, class U> void set_val(U& in_val);
@@ -57,7 +56,7 @@ namespace cxxargs {
   template <typename T>
   class ArgumentVal : public Argument {
   private:
-    std::pair<T, uint16_t> val;
+    T val;
     bool value_initialized = false;
 
   public:
@@ -66,29 +65,27 @@ namespace cxxargs {
       : Argument(short_name, long_name, help_text) {
       this->set_val(in_val);
     }
-    const T& get_val() const { return this->val.first; };
-    void set_val(T& in_val, uint16_t pos = 0) { this->value_initialized = true; this->val = std::make_pair(in_val, pos); }
-    const uint16_t& get_pos() const override { return this->val.second; }
+    const T& get_val() const { return this->val; };
+    void set_val(T& in_val) { this->value_initialized = true; this->val = in_val; }
     const bool& is_initialized() const override { return this->value_initialized; }
 
-    void FindArg(const uint16_t &pos, std::vector<std::string>::const_iterator iter) override {
+    void FindArg(std::vector<std::string>::const_iterator iter) override {
       ++iter;
       std::stringstream str(*iter);
       T in_val;
       str >> in_val;
-      this->set_val(in_val, std::ceil(pos/2.0));
+      this->set_val(in_val);
     }
-    void FindArg(const uint16_t &pos, std::stringstream &str) override {
+    void FindArg(std::stringstream &str) override {
       T in_val;
       str >> in_val;
-      this->set_val(in_val, std::ceil(pos/2.0));
+      this->set_val(in_val);
     }
-
   };
 
-  template<> void ArgumentVal<bool>::FindArg(const uint16_t &pos, std::vector<std::string>::const_iterator iter) {
+  template<> void ArgumentVal<bool>::FindArg(std::vector<std::string>::const_iterator iter) {
     bool in_val = (this->is_initialized() ? !this->get_val() : true);
-    this->set_val(in_val, std::ceil(pos/2.0));
+    this->set_val(in_val);
   }
   
   template<class T> const T& Argument::get_val() const {
@@ -109,14 +106,14 @@ namespace cxxargs {
     void ParseArguments(const aiter &begin, const aiter &end) {
       for (std::vector<std::string>::const_iterator it = begin + 1; it < end; ++it) {
 	if (this->args.find(*it) != this->args.end()) {
-	  this->args.at(*it)->FindArg(it - begin + 1, it);
+	  this->args.at(*it)->FindArg(it);
 	} else if (this->shortargs.find(*it) != this->shortargs.end()) {
-	  this->shortargs.at(*it)->FindArg(it - begin + 1, it);
+	  this->shortargs.at(*it)->FindArg(it);
 	} else if (it->compare(0, 1, "-") == 0 && it->compare(1, 1, "-") != 0) {
 	  for (size_t i = 1; i < it->size(); ++i) {
 	    std::string nname(1, it->at(i));
 	    if (this->shortargs.find("-" + nname) != this->shortargs.end()) {
-	      this->shortargs.at("-" + nname)->FindArg(it - begin + 1, it);
+	      this->shortargs.at("-" + nname)->FindArg(it);
 	    }
 	  }
 	} else if (it->find('=') != std::string::npos) {
@@ -124,7 +121,7 @@ namespace cxxargs {
 	  std::string name;
 	  getline(arg, name, '=');
 	  if (this->args.find(name) != this->args.end()) {
-	    this->args.at(name)->FindArg(it - begin + 1, arg);
+	    this->args.at(name)->FindArg(arg);
 	  }
 	} else if (it->compare("--") == 0) {
 	  while (++it < end) {
@@ -159,14 +156,6 @@ namespace cxxargs {
       }
       #endif
       return this->args.at("--" + name)->get_val<T>();
-    }
-    const uint16_t& get_pos(const std::string &name) const {
-      #ifdef CXXARGS_EXCEPTIONS_HPP
-      if (this->args.find("--" + name) == this->args.end()) {
-	throw exceptions::argument_not_found(name);
-      }
-      #endif
-      return this->args.at("--" + name)->get_pos();
     }
     const std::string& get_program_name() const { return this->program_name; }
     const std::string& get_positional(const uint16_t &pos) const {
