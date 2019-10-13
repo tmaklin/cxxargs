@@ -13,7 +13,7 @@ the following formats
 
 -a
 -ab
--abc value1
+-abc value
 ```
 where the last option will take the argument 'value', while -a and -b
 do not.
