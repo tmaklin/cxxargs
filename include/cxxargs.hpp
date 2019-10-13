@@ -6,11 +6,9 @@
 #define CXXARGS_CXXARGS_HPP
 
 #include <string>
-#include <algorithm>
 #include <map>
 #include <sstream>
 #include <vector>
-#include <cmath>
 #include <utility>
 #include <exception>
 
