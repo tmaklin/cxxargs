@@ -77,6 +77,27 @@ defined without a default value and a value was not supplied to
 parse(), or 2) the argument "double" has not defined as a
 possible argument.
 
+## Extensions
+cxxargs can easily be extended to interpret the command-line input as something
+unconvential. For example, to open the argument '-f infile.txt' as a
+std::shared_ptr to a std::ifstream for reading, start by defining a std::istream&
+operator>> for this particular class in the cxxargs namespace
+```
+namespace cxxargs {
+  std::istream& operator>> (std::istream &in, std::shared_ptr<std::ifstream> &t) {
+    std::string filename;
+    in >> filename;
+    t = std::shared_ptr<std::ifstream>(new std::ifstream(filename));
+    return in;
+  }
+}
+```
+and use the same syntax as before to add the file
+into the list of possible arguments
+```
+args.add_argument<std::shared_ptr<std::ifstream>>('f', "infile", "This is an infile stream.");
+```
+
 # Requirements and dependencies
 This is a header-only library with no dependencies, only requiring
 that your compiler supports C++11.
