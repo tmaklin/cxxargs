@@ -1,7 +1,8 @@
 # cxxargs
 Yet another C++11 header-only command line parsing library. Heavily
 inspired by the [cxxopts
-library](https://github.com/jarro2783/cxxopts).
+library](https://github.com/jarro2783/cxxopts), which you might want
+to consider using.
 
 ## Accepted input
 cxxargs will recognize command line arguments and options supplied in
