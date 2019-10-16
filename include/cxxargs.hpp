@@ -20,7 +20,7 @@ namespace cxxargs {
   namespace exceptions {
     struct cxxargs_exception : public std::exception {
       std::string msg;
-      const char* what() const throw() { return msg.c_str(); };
+      const char* what() const noexcept { return msg.c_str(); }
     };
     struct argument_not_found : public cxxargs_exception {
       argument_not_found(const std::string &name) {
@@ -51,10 +51,10 @@ namespace cxxargs {
 
    public:
     Argument();
-    Argument(char short_name, std::string long_name, std::string help_text)
-      : short_name(short_name)
-      , long_name("--" + long_name)
-      , help_text("-" + std::string(1, this->short_name) + " " + this->long_name + "\t" + help_text) {};
+    Argument(char s_name, std::string l_name, std::string h_text)
+      : short_name(s_name)
+      , long_name("--" + l_name)
+      , help_text("-" + std::string(1, this->short_name) + " " + this->long_name + "\t" + h_text) {}
     virtual ~Argument() = default;
 
     virtual void parse_argument(std::stringstream &str) =0;
@@ -78,7 +78,7 @@ namespace cxxargs {
       : Argument(short_name, long_name, help_text) {
       this->set_val(in_val);
     }
-    ~ArgumentVal() = default;
+    ~ArgumentVal() override = default;
 
     void parse_argument(std::stringstream &str) override {
       T in_val;
@@ -93,7 +93,7 @@ namespace cxxargs {
     void set_val(T& in_val) { this->value_initialized = true; this->val = in_val; }
 
     const bool& is_initialized() const override { return this->value_initialized; }
-    const T& get_val() const { return this->val; };
+    const T& get_val() const { return this->val; }
   };
   template<> void ArgumentVal<bool>::parse_argument(std::vector<std::string>::const_iterator iter) {
     bool in_val = (this->is_initialized() ? !this->get_val() : true);
@@ -115,17 +115,17 @@ namespace cxxargs {
     std::string program_name;
 
    public:
-    Arguments(std::string program_name, std::string usage_info)
-      : program_name(program_name), help_text(usage_info) {};
+    Arguments(std::string p_name, std::string u_info)
+      : help_text(u_info), program_name(p_name) {}
 
-    template <typename T> void add_argument(char short_name, std::string long_name, std::string help_text) {
-      this->args.insert(std::make_pair("--" + long_name, std::shared_ptr<Argument>(new ArgumentVal<T>(short_name, long_name, help_text))));
-      this->shortargs.insert(std::make_pair(short_name, this->args.at("--" + long_name)));
-      this->help_text += '\n' + args.at("--" + long_name)->get_help();
+    template <typename T> void add_argument(char s_name, std::string l_name, std::string h_text) {
+      this->args.insert(std::make_pair("--" + l_name, std::shared_ptr<Argument>(new ArgumentVal<T>(s_name, l_name, h_text))));
+      this->shortargs.insert(std::make_pair(s_name, this->args.at("--" + l_name)));
+      this->help_text += '\n' + args.at("--" + l_name)->get_help();
     }
-    template <typename T> void add_argument(char short_name, std::string long_name, std::string help_text, T in_val) {
-      this->add_argument<T>(short_name, long_name, help_text);
-      this->args.at("--" + long_name)->set_val<T>(in_val);
+    template <typename T> void add_argument(char s_name, std::string l_name, std::string h_text, T in_val) {
+      this->add_argument<T>(s_name, l_name, h_text);
+      this->args.at("--" + l_name)->set_val<T>(in_val);
     }
     void parse(int argc, char** argv) {
       std::vector<std::string> vec(argv, argv+argc);      
@@ -163,9 +163,9 @@ namespace cxxargs {
       }
       return this->args.at("--" + name)->get_val<T>();
     }
-    const std::string& help() const { return this->help_text; };
+    const std::string& help() const { return this->help_text; }
     const std::string& get_program_name() const { return this->program_name; }
-    const std::string& get_positional(const uint16_t &pos) const { return this->positionals.at(pos); }
+    const std::string& get_positional(const size_t &pos) const { return this->positionals.at(pos); }
   };
 }
 
