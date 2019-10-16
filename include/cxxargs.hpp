@@ -14,7 +14,7 @@
 
 #define CXXARGS_VERSION_MAJOR 1
 #define CXXARGS_VERSION_MINOR 0
-#define CXXARGS_VERSION_PATCH 0
+#define CXXARGS_VERSION_PATCH 1
 
 namespace cxxargs {
   namespace exceptions {
