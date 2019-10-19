@@ -20,17 +20,8 @@ namespace cxxargs {
   namespace exceptions {
     struct cxxargs_exception : public std::exception {
       std::string msg;
+      cxxargs_exception(std::string m) : msg(m) {}
       const char* what() const noexcept { return msg.c_str(); }
-    };
-    struct argument_not_found : public cxxargs_exception {
-      argument_not_found(const std::string &name) {
-	msg += "Argument --" + name + " is not defined.";
-      }
-    };
-    struct value_uninitialized : public cxxargs_exception {
-      value_uninitialized(const std::string &name) {
-	msg += "Value of --" + name + " has not been set and has no default value.";
-      }
     };
   }
   template <typename T> std::istream& operator>> (std::istream &in, std::vector<T> &t) {
@@ -157,9 +148,9 @@ namespace cxxargs {
 
     template <typename T> const T& value(const std::string &name) const {
       if (this->args.find("--" + name) == this->args.end()) {
-	throw exceptions::argument_not_found(name);
+	throw exceptions::cxxargs_exception("Argument --" + name + " is not defined.");
       } else if (!this->args.at("--" + name)->is_initialized()) {
-	throw exceptions::value_uninitialized(name);
+	throw exceptions::cxxargs_exception("Value of --" + name + " was not given and has no default.");
       }
       return this->args.at("--" + name)->get_val<T>();
     }
