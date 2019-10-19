@@ -21,7 +21,7 @@ namespace cxxargs {
     struct cxxargs_exception : public std::exception {
       std::string msg;
       cxxargs_exception(std::string m) : msg(m) {}
-      const char* what() const noexcept { return msg.c_str(); }
+      const char* what() const noexcept override { return msg.c_str(); }
     };
   }
   template <typename T> std::istream& operator>> (std::istream &in, std::vector<T> &t) {
