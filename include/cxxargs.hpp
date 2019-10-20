@@ -20,9 +20,12 @@ namespace cxxargs {
   namespace exceptions {
     struct cxxargs_exception : public std::exception {
       std::string msg;
+      virtual ~cxxargs_exception() override;
+      cxxargs_exception(cxxargs_exception&&) = default;
       cxxargs_exception(std::string m) : msg(m) {}
       const char* what() const noexcept override { return msg.c_str(); }
     };
+    cxxargs_exception::~cxxargs_exception() = default;
   }
   template <typename T> std::istream& operator>> (std::istream &in, std::vector<T> &t) {
     std::string str;
@@ -46,7 +49,7 @@ namespace cxxargs {
       : short_name(s_name)
       , long_name("--" + l_name)
       , help_text("-" + std::string(1, this->short_name) + " " + this->long_name + "\t" + h_text) {}
-    virtual ~Argument() = default;
+    virtual ~Argument();
 
     virtual void parse_argument(std::stringstream &str) =0;
     virtual void parse_argument(std::vector<std::string>::const_iterator iter) =0;
@@ -56,6 +59,7 @@ namespace cxxargs {
     template <class T> const T& get_val() const;
     const std::string& get_help() const { return this->help_text; }
   };
+  Argument::~Argument() = default;
 
   template <typename T>
   class ArgumentVal : public Argument {
