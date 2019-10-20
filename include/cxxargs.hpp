@@ -90,7 +90,7 @@ namespace cxxargs {
     const bool& is_initialized() const override { return this->value_initialized; }
     const T& get_val() const { return this->val; }
   };
-  template<> void ArgumentVal<bool>::parse_argument(std::vector<std::string>::const_iterator iter) {
+  template<> void ArgumentVal<bool>::parse_argument(std::vector<std::string>::const_iterator) {
     bool in_val = (this->is_initialized() ? !this->get_val() : true);
     this->set_val(in_val);
   }
