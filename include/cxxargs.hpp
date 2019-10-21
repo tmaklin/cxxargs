@@ -45,6 +45,8 @@ namespace cxxargs {
 
    public:
     Argument();
+    Argument(char s_name, std::string h_text) : short_name(s_name), help_text('-' + std::string(1, this->short_name) + '\t' + h_text) {}
+    Argument(std::string l_name, std::string h_text) : long_name(l_name), help_text("--" + this->long_name + '\t' + h_text) {}
     Argument(char s_name, std::string l_name, std::string h_text)
       : short_name(s_name)
       , long_name("--" + l_name)
@@ -69,6 +71,14 @@ namespace cxxargs {
 
    public:
     using Argument::Argument;
+    ArgumentVal(char short_name, std::string help_text, T in_val)
+      : Argument(short_name, help_text) {
+      this->set_val(in_val);
+    }
+    ArgumentVal(std::string long_name, std::string help_text, T in_val)
+      : Argument(long_name, help_text) {
+      this->set_val(in_val);
+    }
     ArgumentVal(char short_name, std::string long_name, std::string help_text, T in_val)
       : Argument(short_name, long_name, help_text) {
       this->set_val(in_val);
@@ -103,7 +113,7 @@ namespace cxxargs {
 
   class Arguments {
    private:
-    std::map<std::string, std::shared_ptr<Argument>> args;
+    std::map<std::string, std::shared_ptr<Argument>> longargs;
     std::map<char, std::shared_ptr<Argument>> shortargs;
     std::vector<std::string> positionals;
     std::string help_text;
@@ -114,19 +124,19 @@ namespace cxxargs {
       : help_text(u_info), program_name(p_name) {}
 
     template <typename T> void add_argument(char s_name, std::string l_name, std::string h_text) {
-      this->args.insert(std::make_pair("--" + l_name, std::shared_ptr<Argument>(new ArgumentVal<T>(s_name, l_name, h_text))));
-      this->shortargs.insert(std::make_pair(s_name, this->args.at("--" + l_name)));
-      this->help_text += '\n' + args.at("--" + l_name)->get_help();
+      this->longargs.insert(std::make_pair("--" + l_name, std::shared_ptr<Argument>(new ArgumentVal<T>(s_name, l_name, h_text))));
+      this->shortargs.insert(std::make_pair(s_name, this->longargs.at("--" + l_name)));
+      this->help_text += '\n' + this->longargs.at("--" + l_name)->get_help();
     }
     template <typename T> void add_argument(char s_name, std::string l_name, std::string h_text, T in_val) {
       this->add_argument<T>(s_name, l_name, h_text);
-      this->args.at("--" + l_name)->set_val<T>(in_val);
+      this->longargs.at("--" + l_name)->set_val<T>(in_val);
     }
     void parse(int argc, char** argv) {
       std::vector<std::string> vec(argv, argv+argc);      
       for (std::vector<std::string>::const_iterator it = vec.begin() + 1; it < vec.end(); ++it) {
-	if (this->args.find(*it) != this->args.end()) {
-	  this->args.at(*it)->parse_argument(it);
+	if (this->longargs.find(*it) != this->longargs.end()) {
+	  this->longargs.at(*it)->parse_argument(it);
 	} else if (it->compare(0, 1, "-") == 0 && it->compare(1, 1, "-") != 0) {
 	  for (size_t i = 1; i < it->size(); ++i) {
 	    if (this->shortargs.find(it->at(i)) != this->shortargs.end()) {
@@ -137,8 +147,8 @@ namespace cxxargs {
 	  std::stringstream arg(*it);
 	  std::string name;
 	  getline(arg, name, '=');
-	  if (this->args.find(name) != this->args.end()) {
-	    this->args.at(name)->parse_argument(arg);
+	  if (this->longargs.find(name) != this->longargs.end()) {
+	    this->longargs.at(name)->parse_argument(arg);
 	  }
 	} else if (it->compare("--") == 0) {
 	  while (++it < vec.end()) {
@@ -151,12 +161,12 @@ namespace cxxargs {
     size_t n_positionals() const { return this->positionals.size(); }
 
     template <typename T> const T& value(const std::string &name) const {
-      if (this->args.find("--" + name) == this->args.end()) {
+      if (this->longargs.find("--" + name) == this->longargs.end()) {
 	throw exceptions::cxxargs_exception("Argument --" + name + " is not defined.");
-      } else if (!this->args.at("--" + name)->is_initialized()) {
+      } else if (!this->longargs.at("--" + name)->is_initialized()) {
 	throw exceptions::cxxargs_exception("Value of --" + name + " was not given and has no default.");
       }
-      return this->args.at("--" + name)->get_val<T>();
+      return this->longargs.at("--" + name)->get_val<T>();
     }
     const std::string& help() const { return this->help_text; }
     const std::string& get_program_name() const { return this->program_name; }
