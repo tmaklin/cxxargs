@@ -123,15 +123,27 @@ namespace cxxargs {
     Arguments(std::string p_name, std::string u_info)
       : help_text(u_info), program_name(p_name) {}
 
+
     template <typename T> void add_argument(char s_name, std::string l_name, std::string h_text) {
       this->longargs.insert(std::make_pair("--" + l_name, std::shared_ptr<Argument>(new ArgumentVal<T>(s_name, l_name, h_text))));
       this->shortargs.insert(std::make_pair(s_name, this->longargs.at("--" + l_name)));
+      this->help_text += '\n' + std::string(1, s_name) + " " + l_name  + '\t' + this->longargs.at("--" + l_name)->get_help();
+    }
+    template <typename T> void add_argument(std::string l_name, std::string h_text) {
+      this->longargs.insert(std::make_pair(l_name, std::shared_ptr<Argument>(new ArgumentVal<T>(l_name, h_text))));
       this->help_text += '\n' + this->longargs.at("--" + l_name)->get_help();
     }
-    template <typename T> void add_argument(char s_name, std::string l_name, std::string h_text, T in_val) {
-      this->add_argument<T>(s_name, l_name, h_text);
-      this->longargs.at("--" + l_name)->set_val<T>(in_val);
+    template <typename T> void add_argument(char s_name, std::string h_text) {
+      this->shortargs.insert(std::make_pair(s_name, std::shared_ptr<Argument>(new ArgumentVal<T>(s_name, h_text))));
+      this->help_text += '\n' + this->shortargs.at(s_name)->get_help();
     }
+    template <typename T> void set_val(const char &s_name, T in_val) {
+      this->shortargs.at(s_name)->set_val<T>(in_val);
+    }
+    template <typename T> void set_val(const std::string &l_name, T in_val) {
+      this->longargs.at(l_name)->set_val<T>(in_val);
+    }
+
     void parse(int argc, char** argv) {
       std::vector<std::string> vec(argv, argv+argc);      
       for (std::vector<std::string>::const_iterator it = vec.begin() + 1; it < vec.end(); ++it) {
