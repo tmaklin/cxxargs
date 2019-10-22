@@ -25,6 +25,16 @@ namespace cxxargs {
       cxxargs_exception(std::string m) : msg(m) {}
       const char* what() const noexcept override { return msg.c_str(); }
     };
+    struct argument_uninitialized_exception : public cxxargs_exception {
+      argument_uninitialized_exception(std::string name)
+	: cxxargs_exception("Argument " + name + " was not given and has no default value.") {}
+      argument_uninitialized_exception(char name) : argument_uninitialized_exception(std::string(1, name)) {}
+    };
+    struct argument_not_defined_exception : public cxxargs_exception {
+      argument_not_defined_exception(std::string name)
+	: cxxargs_exception("Argument " + name + " is not defined.") {}
+      argument_not_defined_exception(char name) : argument_not_defined_exception(std::string(1, name)) {}
+    };
     cxxargs_exception::~cxxargs_exception() = default;
   }
   template <typename T> std::istream& operator>> (std::istream &in, std::vector<T> &t) {
@@ -119,6 +129,16 @@ namespace cxxargs {
     std::string help_text;
     std::string program_name;
 
+    template <typename T> void validate(const std::map<T, std::shared_ptr<Argument>> &args) const {
+      for (auto kv : args) {
+	if (!kv.second->is_initialized()) {
+	  throw exceptions::argument_uninitialized_exception(kv.first);
+	}
+      }
+    }
+    const std::shared_ptr<Argument>& get_val(const std::string &name) const { return this->longargs.at("--" + name); }
+    const std::shared_ptr<Argument>& get_val(const char &name) const { return this->shortargs.at(name); }
+
    public:
     Arguments(std::string p_name, std::string u_info)
       : help_text(u_info), program_name(p_name) {}
@@ -168,26 +188,16 @@ namespace cxxargs {
 	  }
 	}
       }
+      this->validate(this->longargs);
+      this->validate(this->shortargs);
     }
 
     size_t n_positionals() const { return this->positionals.size(); }
 
-    template <typename T> const T& value(const std::string &name) const {
-      if (this->longargs.find("--" + name) == this->longargs.end()) {
-	throw exceptions::cxxargs_exception("Argument --" + name + " is not defined.");
-      } else if (!this->longargs.at("--" + name)->is_initialized()) {
-	throw exceptions::cxxargs_exception("Value of --" + name + " was not given and has no default.");
-      }
-      return this->longargs.at("--" + name)->get_val<T>();
+    template <typename T, typename V> const T& value(const V &name) const {
+      return (*this->get_val(name)).template get_val<T>();
     }
-    template <typename T> const T& value(const char &name) const {
-      if (this->shortargs.find(name) == this->shortargs.end()) {
-	throw exceptions::cxxargs_exception("Argument -" + std::string(1, name) + " is not defined.");
-      } else if (!this->shortargs.at(name)->is_initialized()) {
-	throw exceptions::cxxargs_exception("Value of -" + std::string(1, name) + " was not given and has no default.");
-      }
-      return this->shortargs.at(name)->get_val<T>();
-    }
+
     const std::string& help() const { return this->help_text; }
     const std::string& get_program_name() const { return this->program_name; }
     const std::string& get_positional(const size_t &pos) const { return this->positionals.at(pos); }
