@@ -138,6 +138,8 @@ namespace cxxargs {
     }
     const std::shared_ptr<Argument>& get_val(const std::string &name) const { return this->longargs.at("--" + name); }
     const std::shared_ptr<Argument>& get_val(const char &name) const { return this->shortargs.at(name); }
+    template<typename T> void set_own_val(const std::string &name, T in_val) { this->longargs.at("--" + name)->set_val<T>(in_val); }
+    template<typename T> void set_own_val(const char &name, T in_val) { this->shortargs.at(name)->set_val<T>(in_val); }
 
    public:
     Arguments(std::string p_name, std::string u_info)
@@ -157,11 +159,8 @@ namespace cxxargs {
       this->shortargs.insert(std::make_pair(s_name, std::shared_ptr<Argument>(new ArgumentVal<T>(s_name, h_text))));
       this->help_text += '\n' + this->shortargs.at(s_name)->get_help();
     }
-    template <typename T> void set_val(const char &s_name, T in_val) {
-      this->shortargs.at(s_name)->set_val<T>(in_val);
-    }
-    template <typename T> void set_val(const std::string &l_name, T in_val) {
-      this->longargs.at(l_name)->set_val<T>(in_val);
+    template <typename T, typename V> void set_val(const V& name, T in_val) {
+      this->set_own_val<T>(name, in_val);
     }
 
     void parse(int argc, char** argv) {
