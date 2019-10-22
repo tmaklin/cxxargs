@@ -180,6 +180,14 @@ namespace cxxargs {
       }
       return this->longargs.at("--" + name)->get_val<T>();
     }
+    template <typename T> const T& value(const char &name) const {
+      if (this->shortargs.find(name) == this->shortargs.end()) {
+	throw exceptions::cxxargs_exception("Argument -" + std::string(1, name) + " is not defined.");
+      } else if (!this->shortargs.at(name)->is_initialized()) {
+	throw exceptions::cxxargs_exception("Value of -" + std::string(1, name) + " was not given and has no default.");
+      }
+      return this->shortargs.at(name)->get_val<T>();
+    }
     const std::string& help() const { return this->help_text; }
     const std::string& get_program_name() const { return this->program_name; }
     const std::string& get_positional(const size_t &pos) const { return this->positionals.at(pos); }
