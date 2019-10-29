@@ -140,7 +140,6 @@ namespace cxxargs {
     Arguments(std::string p_name, std::string u_info)
       : help_text(u_info), program_name(p_name) {}
 
-
     template <typename T> void add_argument(char s_name, std::string l_name, std::string h_text) {
       this->longargs.insert(std::make_pair(l_name, std::shared_ptr<Argument>(new ArgumentVal<T>(s_name, l_name, h_text))));
       this->shortargs.insert(std::make_pair(s_name, this->longargs.at(l_name)));
