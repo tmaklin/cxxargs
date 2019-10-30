@@ -195,6 +195,7 @@ namespace cxxargs {
     const std::string& get_program_name() const { return this->program_name; }
     const std::string& get_positional(const size_t &pos) const { return this->positionals.at(pos); }
   };
+  static const std::string get_version() { return 'v' + std::to_string(CXXARGS_VERSION_MAJOR) + '.' + std::to_string(CXXARGS_VERSION_MINOR) + '.' + std::to_string(CXXARGS_VERSION_PATCH); }
 }
 
 #endif
