@@ -140,8 +140,11 @@ namespace cxxargs {
     Arguments(std::string p_name, std::string u_info)
       : help_text(u_info), program_name(p_name) {}
 
-    template <typename T, typename V> void set_val(const V& name, T in_val) {
+    template <typename T> void set_val(const char &name, T in_val) {
       this->set_own_val<T>(name, in_val);
+    }
+    template <typename T> void set_val(const std::string& name, T in_val) {
+      this->set_own_val<T>("--" + name, in_val);
     }
 
     template <typename T> void add_argument(char s_name, std::string l_name, std::string h_text) {
@@ -152,7 +155,7 @@ namespace cxxargs {
     template <typename T> void add_argument(char s_name, std::string l_name, std::string h_text, T in_val) {
       this->add_argument<T>(s_name, l_name, h_text);
       this->set_val<T>(s_name, in_val);
-      this->set_val<T>("--" + l_name, in_val);
+      this->set_val<T>(l_name, in_val);
     }
 
     template <typename T> void add_long_argument(std::string l_name, std::string h_text) {
@@ -161,7 +164,7 @@ namespace cxxargs {
     }
     template<typename T> void add_long_argument(std::string l_name, std::string h_text, T in_val) {
       this->add_long_argument<T>(l_name, h_text);
-      this->set_val<T>("--" + l_name, in_val);
+      this->set_val<T>(l_name, in_val);
     }
 
     template <typename T> void add_short_argument(char s_name, std::string h_text) {
