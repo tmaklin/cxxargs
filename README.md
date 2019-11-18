@@ -38,15 +38,16 @@ and define some possible arguments
 ```
   args.add_argument<double>('d', "double", "This is a double with the
   default value 0.222.", 0.222);
-  args.add_argument<bool>('t', "toggle", "This is a boolean toggle with
+  args.add_long_argument<bool>("toggle", "This is a boolean toggle with
   the default value false.");
-  args.add_argument<std::vector<int>>('l', "list", "This is a list of
+  args.add_short_argument<std::vector<int>>('l', "This is a list of
   integers with no default values.");
 ```
+All arguments with no defaults are required and must be supplied from the command line.
 
 Parse the command line input
 ```
-myprogram -d 0.5483 --toggle --list=1,2,3,4 -- positional1, positional2
+myprogram --double=0.5483 --toggle -l 1,2,3,4 -- positional1, positional2
 ```
 by calling
 ```
