@@ -54,8 +54,8 @@ namespace cxxargs {
    public:
     Argument();
     Argument(char short_name, std::string h_text) : help_text('-' + std::string(1, short_name) + '\t' + h_text) {}
-    Argument(std::string long_name, std::string h_text) : help_text("--" + long_name + '\t' + h_text) {}
-    Argument(char short_name, std::string long_name, std::string h_text) : help_text("-" + std::string(1, short_name) + " --" + long_name + "\t" + h_text) {}
+    Argument(std::string long_name, std::string h_text) : help_text(long_name + '\t' + h_text) {}
+    Argument(char short_name, std::string long_name, std::string h_text) : help_text("-" + std::string(1, short_name) + ' ' + long_name + "\t" + h_text) {}
     virtual ~Argument();
 
     virtual void parse_argument(std::stringstream &str) =0;
