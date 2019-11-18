@@ -131,30 +131,46 @@ namespace cxxargs {
 	}
       }
     }
-    const std::shared_ptr<Argument>& get_val(const std::string &name) const { return this->longargs.at(name); }
+    const std::shared_ptr<Argument>& get_val(const std::string &name) const { return this->longargs.at("--" + name); }
     const std::shared_ptr<Argument>& get_val(const char &name) const { return this->shortargs.at(name); }
-    template<typename T> void set_own_val(const std::string &name, T in_val) { this->longargs.at(name)->set_val<T>(in_val); }
+    template<typename T> void set_own_val(const std::string &name, T in_val) { this->longargs.at("--" + name)->set_val<T>(in_val); }
     template<typename T> void set_own_val(const char &name, T in_val) { this->shortargs.at(name)->set_val<T>(in_val); }
 
    public:
     Arguments(std::string p_name, std::string u_info)
       : help_text(u_info), program_name(p_name) {}
 
+    template <typename T, typename V> void set_val(const V& name, T in_val) {
+      this->set_own_val<T>(name, in_val);
+    }
+
     template <typename T> void add_argument(char s_name, std::string l_name, std::string h_text) {
-      this->longargs.insert(std::make_pair(l_name, std::shared_ptr<Argument>(new ArgumentVal<T>(s_name, l_name, h_text))));
-      this->shortargs.insert(std::make_pair(s_name, this->longargs.at(l_name)));
-      this->help_text += '\n' + std::string(1, s_name) + " " + l_name  + '\t' + this->longargs.at(l_name)->get_help();
+      this->longargs.insert(std::make_pair("--" + l_name, std::shared_ptr<Argument>(new ArgumentVal<T>(s_name, "--" + l_name, h_text))));
+      this->shortargs.insert(std::make_pair(s_name, this->longargs.at("--" + l_name)));
+      this->help_text += '\n' + this->longargs.at("--" + l_name)->get_help();
     }
-    template <typename T> void add_argument(std::string l_name, std::string h_text) {
-      this->longargs.insert(std::make_pair(l_name, std::shared_ptr<Argument>(new ArgumentVal<T>(l_name, h_text))));
-      this->help_text += '\n' + this->longargs.at(l_name)->get_help();
+    template <typename T> void add_argument(char s_name, std::string l_name, std::string h_text, T in_val) {
+      this->add_argument<T>(s_name, "--" + l_name, h_text);
+      this->set_val<T>(s_name, in_val);
+      this->set_val<T>("--" + l_name, in_val);
     }
-    template <typename T> void add_argument(char s_name, std::string h_text) {
+
+    template <typename T> void add_long_argument(std::string l_name, std::string h_text) {
+      this->longargs.insert(std::make_pair("--" + l_name, std::shared_ptr<Argument>(new ArgumentVal<T>("--" + l_name, h_text))));
+      this->help_text += '\n' + this->longargs.at("--" + l_name)->get_help();
+    }
+    template<typename T> void add_long_argument(std::string l_name, std::string h_text, T in_val) {
+      this->add_long_argument<T>("--" + l_name, h_text);
+      this->set_val<T>("--" + l_name, in_val);
+    }
+
+    template <typename T> void add_short_argument(char s_name, std::string h_text) {
       this->shortargs.insert(std::make_pair(s_name, std::shared_ptr<Argument>(new ArgumentVal<T>(s_name, h_text))));
       this->help_text += '\n' + this->shortargs.at(s_name)->get_help();
     }
-    template <typename T, typename V> void set_val(const V& name, T in_val) {
-      this->set_own_val<T>(name, in_val);
+    template <typename T> void add_short_argument(char s_name, std::string h_text, T in_val) {
+      this->add_short_argument<T>(s_name, h_text);
+      this->set_val(s_name, in_val);
     }
 
     void parse(int argc, char** argv) {
@@ -187,8 +203,11 @@ namespace cxxargs {
 
     size_t n_positionals() const { return this->positionals.size(); }
 
-    template <typename T, typename V> const T& value(const V &name) const {
+    template <typename T> const T& value(const char &name) const {
       return (*this->get_val(name)).template get_val<T>();
+    }
+    template <typename T> const T& value(const std::string &name) const {
+      return (*this->get_val("--" + name)).template get_val<T>();
     }
 
     const std::string& help() const { return this->help_text; }
