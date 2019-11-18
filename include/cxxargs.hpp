@@ -131,9 +131,9 @@ namespace cxxargs {
 	}
       }
     }
-    const std::shared_ptr<Argument>& get_val(const std::string &name) const { return this->longargs.at("--" + name); }
+    const std::shared_ptr<Argument>& get_val(const std::string &name) const { return this->longargs.at(name); }
     const std::shared_ptr<Argument>& get_val(const char &name) const { return this->shortargs.at(name); }
-    template<typename T> void set_own_val(const std::string &name, T in_val) { this->longargs.at("--" + name)->set_val<T>(in_val); }
+    template<typename T> void set_own_val(const std::string &name, T in_val) { this->longargs.at(name)->set_val<T>(in_val); }
     template<typename T> void set_own_val(const char &name, T in_val) { this->shortargs.at(name)->set_val<T>(in_val); }
 
    public:
@@ -150,7 +150,7 @@ namespace cxxargs {
       this->help_text += '\n' + this->longargs.at("--" + l_name)->get_help();
     }
     template <typename T> void add_argument(char s_name, std::string l_name, std::string h_text, T in_val) {
-      this->add_argument<T>(s_name, "--" + l_name, h_text);
+      this->add_argument<T>(s_name, l_name, h_text);
       this->set_val<T>(s_name, in_val);
       this->set_val<T>("--" + l_name, in_val);
     }
@@ -160,7 +160,7 @@ namespace cxxargs {
       this->help_text += '\n' + this->longargs.at("--" + l_name)->get_help();
     }
     template<typename T> void add_long_argument(std::string l_name, std::string h_text, T in_val) {
-      this->add_long_argument<T>("--" + l_name, h_text);
+      this->add_long_argument<T>(l_name, h_text);
       this->set_val<T>("--" + l_name, in_val);
     }
 
