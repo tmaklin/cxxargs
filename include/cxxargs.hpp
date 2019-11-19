@@ -11,10 +11,11 @@
 #include <vector>
 #include <utility>
 #include <exception>
+#include <memory>
 
 #define CXXARGS_VERSION_MAJOR 1
 #define CXXARGS_VERSION_MINOR 1
-#define CXXARGS_VERSION_PATCH 1
+#define CXXARGS_VERSION_PATCH 3
 
 namespace cxxargs {
   namespace exceptions {
@@ -63,8 +64,11 @@ namespace cxxargs {
     template <class T, class U> void set_val(U& in_val);
 
     virtual const bool& is_initialized() const =0;
+    virtual const bool& is_required() const =0;
     template <class T> const T& get_val() const;
     const std::string& get_help() const { return this->help_text; }
+    virtual void set_not_required() =0;
+    template <class T> void set_val(T& in_val);
   };
   Argument::~Argument() = default;
 
@@ -73,6 +77,7 @@ namespace cxxargs {
    private:
     T val;
     bool value_initialized = false;
+    bool required = true;
 
    public:
     using Argument::Argument;
@@ -103,7 +108,9 @@ namespace cxxargs {
     void set_val(T& in_val) { this->value_initialized = true; this->val = in_val; }
 
     const bool& is_initialized() const override { return this->value_initialized; }
+    const bool& is_required() const override { return this->required; }
     const T& get_val() const { return this->val; }
+    void set_not_required() override { this->required = false; }
   };
   template<> void ArgumentVal<bool>::parse_argument(std::vector<std::string>::const_iterator) {
     bool in_val = (this->is_initialized() ? !this->get_val() : true);
@@ -126,13 +133,25 @@ namespace cxxargs {
 
     template <typename T> void validate(const std::map<T, std::shared_ptr<Argument>> &args) const {
       for (auto kv : args) {
-	if (!kv.second->is_initialized()) {
+	if (!kv.second->is_initialized() && kv.second->is_required()) {
 	  throw exceptions::argument_uninitialized_exception(kv.first);
 	}
       }
     }
-    const std::shared_ptr<Argument>& get_val(const std::string &name) const { return this->longargs.at(name); }
-    const std::shared_ptr<Argument>& get_val(const char &name) const { return this->shortargs.at(name); }
+    const std::shared_ptr<Argument>& get_val(const std::string &name) const {
+      if (this->longargs.find(name) != this->longargs.end()) {
+	return this->longargs.at(name);
+      } else {
+	throw exceptions::argument_not_defined_exception(name);
+      }
+    }
+    const std::shared_ptr<Argument>& get_val(const char &name) const {
+      if (this->longargs.find(name) != this->longargs.end()) {
+	return this->shortargs.at(name);
+      } else {
+	throw exceptions::argument_not_defined_exception(name);
+      }
+    }
     template<typename T> void set_own_val(const std::string &name, T in_val) { this->longargs.at(name)->set_val<T>(in_val); }
     template<typename T> void set_own_val(const char &name, T in_val) { this->shortargs.at(name)->set_val<T>(in_val); }
 
@@ -176,6 +195,13 @@ namespace cxxargs {
       this->set_val(s_name, in_val);
     }
 
+    void set_not_required(const char &s_name) {
+      this->shortargs.at(s_name)->set_not_required();
+    }
+    void set_not_required(const std::string &l_name) {
+      this->longargs.at(l_name)->set_not_required();
+    }
+
     void parse(int argc, char** argv) {
       std::vector<std::string> vec(argv, argv+argc);      
       for (std::vector<std::string>::const_iterator it = vec.begin() + 1; it < vec.end(); ++it) {
@@ -216,6 +242,11 @@ namespace cxxargs {
     const std::string& help() const { return this->help_text; }
     const std::string& get_program_name() const { return this->program_name; }
     const std::string& get_positional(const size_t &pos) const { return this->positionals.at(pos); }
+    const bool& is_initialized(const std::string &l_name) const { return this->longargs.at(l_name)->is_initialized(); }
+    const bool& is_initialized(const char &l_name) const { return this->shortargs.at(l_name)->is_initialized(); }
+    template <typename T> void set_value(const std::string &name, const T &in_val) const {
+      this->longargs.at(name)->set_val(in_val);
+    }
   };
   static const std::string get_version() { return 'v' + std::to_string(CXXARGS_VERSION_MAJOR) + '.' + std::to_string(CXXARGS_VERSION_MINOR) + '.' + std::to_string(CXXARGS_VERSION_PATCH); }
 }
