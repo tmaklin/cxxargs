@@ -146,14 +146,14 @@ namespace cxxargs {
       }
     }
     const std::shared_ptr<Argument>& get_val(const char &name) const {
-      if (this->longargs.find(name) != this->longargs.end()) {
+      if (this->shortargs.find(name) != this->shortargs.end()) {
 	return this->shortargs.at(name);
       } else {
 	throw exceptions::argument_not_defined_exception(name);
       }
     }
-    template<typename T> void set_own_val(const std::string &name, T in_val) { this->longargs.at(name)->set_val<T>(in_val); }
-    template<typename T> void set_own_val(const char &name, T in_val) { this->shortargs.at(name)->set_val<T>(in_val); }
+    template<typename T> void set_own_val(const std::string &name, T in_val) { this->longargs.at(name)->set_val<T, T>(in_val); }
+    template<typename T> void set_own_val(const char &name, T in_val) { this->shortargs.at(name)->set_val<T, T>(in_val); }
 
    public:
     Arguments(std::string p_name, std::string u_info)
