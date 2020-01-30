@@ -199,7 +199,7 @@ namespace cxxargs {
       this->shortargs.at(s_name)->set_not_required();
     }
     void set_not_required(const std::string &l_name) {
-      this->longargs.at(l_name)->set_not_required();
+      this->longargs.at("--" + l_name)->set_not_required();
     }
 
     void parse(int argc, char** argv) {
@@ -242,7 +242,7 @@ namespace cxxargs {
     const std::string& help() const { return this->help_text; }
     const std::string& get_program_name() const { return this->program_name; }
     const std::string& get_positional(const size_t &pos) const { return this->positionals.at(pos); }
-    const bool& is_initialized(const std::string &l_name) const { return this->longargs.at(l_name)->is_initialized(); }
+    const bool& is_initialized(const std::string &l_name) const { return this->longargs.at("--" + l_name)->is_initialized(); }
     const bool& is_initialized(const char &l_name) const { return this->shortargs.at(l_name)->is_initialized(); }
     template <typename T> void set_value(const std::string &name, const T &in_val) const {
       this->longargs.at(name)->set_val(in_val);
