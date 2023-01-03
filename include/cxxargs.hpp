@@ -248,7 +248,7 @@ namespace cxxargs {
       this->longargs.at(name)->set_val(in_val);
     }
   };
-  static const std::string get_version() { return 'v' + std::to_string(CXXARGS_VERSION_MAJOR) + '.' + std::to_string(CXXARGS_VERSION_MINOR) + '.' + std::to_string(CXXARGS_VERSION_PATCH); }
+  const std::string get_version() { return 'v' + std::to_string(CXXARGS_VERSION_MAJOR) + '.' + std::to_string(CXXARGS_VERSION_MINOR) + '.' + std::to_string(CXXARGS_VERSION_PATCH); }
 }
 
 #endif
