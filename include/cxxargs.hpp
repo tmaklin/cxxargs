@@ -205,8 +205,10 @@ namespace cxxargs {
     void parse(int argc, char** argv) {
       std::vector<std::string> vec(argv, argv+argc);      
       for (std::vector<std::string>::const_iterator it = vec.begin() + 1; it < vec.end(); ++it) {
-	if (this->longargs.find(*it) != this->longargs.end()) {
-	  this->longargs.at(*it)->parse_argument(it);
+	std::string arg_name = *it;
+	try {
+	  if (this->longargs.find(*it) != this->longargs.end()) {
+	    this->longargs.at(*it)->parse_argument(it);
 	} else if (it->compare(0, 1, "-") == 0 && it->compare(1, 1, "-") != 0) {
 	  for (size_t i = 1; i < it->size(); ++i) {
 	    if (this->shortargs.find(it->at(i)) != this->shortargs.end()) {
@@ -224,6 +226,9 @@ namespace cxxargs {
 	  while (++it < vec.end()) {
 	    this->positionals.emplace_back(*it);
 	  }
+	}
+	} catch (std::exception &e) {
+	  throw std::invalid_argument("Error in parsing argument " + arg_name);
 	}
       }
       this->validate(this->longargs);
